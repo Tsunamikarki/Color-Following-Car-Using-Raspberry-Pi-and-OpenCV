@@ -1,8 +1,7 @@
+import cv2
 import numpy as np
-import cv2 
 import RPi.GPIO as GPIO 
 import time 
-
 
 enRt = 19 
 enLt = 13
@@ -80,19 +79,32 @@ def stop():
 # speedEnRt.start(60) 
 # speedEnLt.start(60)
 
-#video = cv2.VideoCapture(0)
+video = cv2.VideoCapture(0)
+while True: 
+    ret, frame = video.read()
+    frame = cv2.resize(frame,(640,480))
+    hsvImage = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+    greenLower = np.array([90, 50, 50], np.int8)
+    greenUpper = np.array([130, 255, 255], np.int8)
+    greenMask = cv2.inRange(hsvImage, greenLower, greenUpper)
+    
+    greenFrame = cv2.bitwise_and(frame, frame, mask=greenMask)
+    cv2.imshow('Video', frame)
+    cv2.imshow('Green color detection', greenFrame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-#while True: 
-    #ret, frame = video.read()
-
-if __name__=="__main__":
-    speedEnRt.start(60) 
-    speedEnLt.start(60)
-    forward()
-    time.sleep(2)
-    reverse()
-    time.sleep(2)
-    setServoAngle(0)
-    setServoAngle(90)
-    setServoAngle(180)
-    setServoAngle(90)
+video.release()
+cv2.destroyAllWindows()
+# if __name__=="__main__":
+    # speedEnRt.starst(60) 
+    # speedEnLt.start(60)
+    # forward()
+    # time.sleep(2)
+    # reverse()
+    # time.sleep(2)
+    # setServoAngle(0)
+    # setServoAngle(90)
+    # setServoAngle(180)
+    # setServoAngle(90)
