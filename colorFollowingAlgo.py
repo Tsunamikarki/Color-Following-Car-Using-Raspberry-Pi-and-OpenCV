@@ -45,6 +45,9 @@ def forward():
     GPIO.output(rtRev, GPIO.LOW)
     GPIO.output(ltFwd, GPIO.HIGH)
     GPIO.output(ltRev, GPIO.LOW)
+    speedEnRt.start(60) 
+    speedEnLt.start(60)
+
     print("Moving forward!")
 
 # Backward Motion
@@ -85,23 +88,43 @@ while True:
     frame = cv2.resize(frame,(640,480))
     hsvImage = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
-    greenLower = np.array([90, 50, 50], np.int8)
-    greenUpper = np.array([130, 255, 255], np.int8)
+    greenLower = np.array([35, 100, 100], np.uint8)
+    greenUpper = np.array([85, 255, 255], np.uint8)
     greenMask = cv2.inRange(hsvImage, greenLower, greenUpper)
     
-    greenFrame = cv2.bitwise_and(frame, frame, mask=greenMask)
-    cv2.imshow('Video', frame)
-    cv2.imshow('Green color detection', greenFrame)
+    
+    cnts,_=cv2.findContours(greenMask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    
+    detected = False
+    for c in cnts:
+        if cv2.contourArea(c)>600:
+            x,y,w,h=cv2.boundingRect(c)
+            cv2.rectangle(frame, (x,y),(x+w, y+h),(0,255,0),2)
+            cv2.putText(frame,"DETECTED",(10,60),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0),3)
+            
+            detected = True
+            
+            
+    if detected:
+        forward()
+    else:
+        stop()
+        print("No color detected. Stop the motors.")
+        
+    greenResult=cv2.bitwise_and(frame,frame,mask=greenMask)        
+    cv2.imshow("Original Frame", frame)
+    # cv2.imshow("Original Frame", frame)
+    # cv2.imshow("Result", greenResult)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 video.release()
 cv2.destroyAllWindows()
 # if __name__=="__main__":
-    # speedEnRt.starst(60) 
-    # speedEnLt.start(60)
-    # forward()
-    # time.sleep(2)
+#    speedEnRt.starst(60) 
+#    speedEnLt.start(60)
+#    forward()
+#    time.sleep(2)
     # reverse()
     # time.sleep(2)
     # setServoAngle(0)
