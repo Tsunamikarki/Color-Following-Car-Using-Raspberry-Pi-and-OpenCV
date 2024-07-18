@@ -45,9 +45,8 @@ def forward():
     GPIO.output(rtRev, GPIO.LOW)
     GPIO.output(ltFwd, GPIO.HIGH)
     GPIO.output(ltRev, GPIO.LOW)
-    speedEnRt.start(60) 
-    speedEnLt.start(60)
-
+    speedEnRt.start(80) 
+    speedEnLt.start(80)
     print("Moving forward!")
 
 # Backward Motion
