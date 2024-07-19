@@ -13,6 +13,7 @@ ltRev = 24
 # Servo 
 servoPin = 18
 duty=90
+position=90
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -77,11 +78,17 @@ def stop():
 	GPIO.output(ltFwd, GPIO.LOW)
 	GPIO.output(ltRev, GPIO.LOW)
 
+setServoAngle(position)
 #start PWM
 # speedEnRt.start(60) 
 # speedEnLt.start(60)
 
 video = cv2.VideoCapture(0)
+_, frame = video.read()
+rows, cols, _ = frame.shape
+
+xMedium = int(cols/2)
+center = int(rows /2)
 while True: 
     ret, frame = video.read()
     frame = cv2.resize(frame,(640,480))
@@ -91,18 +98,17 @@ while True:
     greenUpper = np.array([85, 255, 255], np.uint8)
     greenMask = cv2.inRange(hsvImage, greenLower, greenUpper)
     
-    
     cnts,_=cv2.findContours(greenMask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-    
+    cnts = sorted(cnts, key=lambda x:cv2.contourArea(x), reverse=True)
     detected = False
     for c in cnts:
         if cv2.contourArea(c)>600:
             x,y,w,h=cv2.boundingRect(c)
-            cv2.rectangle(frame, (x,y),(x+w, y+h),(0,255,0),2)
+            #cv2.rectangle(frame, (x,y),(x+w, y+h),(0,255,0),2)
             cv2.putText(frame,"DETECTED",(10,60),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0),3)
-            
+            xMedium = int((x + x + w)/2)
             detected = True
-            
+            break
             
     if detected:
         forward()
@@ -110,13 +116,21 @@ while True:
         stop()
         print("No color detected. Stop the motors.")
         
+    cv2.line(frame, (xMedium, 0), (xMedium,480), (0, 255, 0), 2)    
     greenResult=cv2.bitwise_and(frame,frame,mask=greenMask)        
     cv2.imshow("Original Frame", frame)
     # cv2.imshow("Original Frame", frame)
     # cv2.imshow("Result", greenResult)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
+        
+    #Servo motor
+    if xMedium < center - 30:
+        position += 1.5
+    elif xMedium > center + 30:
+        position -= 1.5
+        
+    setServoAngle(position)
 video.release()
 cv2.destroyAllWindows()
 # if __name__=="__main__":
